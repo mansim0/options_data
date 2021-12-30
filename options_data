@@ -1,0 +1,103 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Dec 28 18:43:18 2021
+
+@author: mansi
+"""
+
+import os
+import robin_stocks.robinhood as rs
+import pandas as pd
+
+robin_user = os.environ.get("robinhood_username")
+robin_pass = os.environ.get("robinhood_password")
+
+def login():
+    rs.login(username=robin_user,
+            password=robin_pass,
+            expiresIn=86400,
+            by_sms=True)
+
+def logout():
+    rs.logout()
+
+def options_data(expD, strikeP):
+    rs.options.get_option_market_data(symbol, expD, strikeP, optionType='call', info=None)
+    
+if __name__ == "__main__":  
+    login()
+   
+    symbol = input("What stock are you lloking at?")
+
+    expDate = rs.options.get_chains(symbol, info='expiration_dates')
+    no_epd = (len(expDate))
+    
+    prices = []
+    i = 0
+    strikePrices = {new_list: [] for new_list in range(len(expDate))}
+    for ed in expDate:
+        stk = rs.options.find_options_by_expiration(symbol, ed, optionType='call', info='strike_price')   #look for an easir function to get strike prices
+        prices.extend(stk)
+        strikePrices[i] = stk
+        i = i+1
+    
+    dates = []
+    i = 0;
+    for i, date in enumerate(expDate):
+        this_date = [date]*len(strikePrices[i])
+        dates.extend(this_date)
+    
+    list= ['adjusted_mark_price', 'adjusted_mark_price_round_down', 'ask_price', 'ask_size', 'bid_price', 'bid_size', 'break_even_price',
+            'high_price', 'last_trade_price', 'last_trade_size', 'low_price', 'mark_price', 'open_interest', 'previous_close_date',
+            'previous_close_price', 'volume', 'symbol', 'chance_of_profit_long', 'chance_of_profit_short', 'delta', 
+            'gamma', 'implied_volatility', 'rho', 'theta', 'vega', 'high_fill_rate_buy_price', 'high_fill_rate_sell_price',
+            'low_fill_rate_buy_price', 'low_fill_rate_sell_price']
+    
+    i = 0
+    j = 0
+    x = []
+    date = dates[0]
+    data = []
+    sub = []
+    for d in dates:
+        if(dates[i] != date):
+            data[j] = x
+            x = []
+            date = date[i]
+            j = j+1
+        result = options_data(dates[i], prices[i])
+        for item in list:
+            sub.append(str(options_data[0][0][item]))
+        x.append(sub)
+        sub = []
+    
+    df = []
+    i = 0
+    for d in data:
+        df[i] = pd.DataFrame(d, column = list)
+        i = i + 1
+    
+    i = 0
+    with pd.ExcelWriter('output20.xlsx') as writer:  # doctest: +SKIP
+        while i < no_epd:
+            df[i].to_excel(writer, sheet_name= str(expDate[i]))
+            i = i + 1
+    
+    
+        
+    
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
